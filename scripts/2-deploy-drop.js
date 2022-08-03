@@ -6,9 +6,9 @@ import { readFileSync } from "fs";
   try {
     const editionDropAddress = await sdk.deployer.deployEditionDrop({
       // The collection's name, ex. CryptoPunks
-      name: "CoolDAO Membership",
+      name: "MacUsers Membership",
       // A description for the collection.
-      description: "A DAO exclusively for Cool dudes.",
+      description: "A DAO exclusively for Mac Users.",
       // The image that will be held on our NFT! The fun part :).
       image: readFileSync("scripts/assets/cool.jpg"),
       // We need to pass in the address of the person who will be receiving the proceeds from sales of nfts in the contract.
