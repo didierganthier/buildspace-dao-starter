@@ -1,4 +1,5 @@
-import { useAddress, useMetamask, useEditionDrop, useToken, useVote } from '@thirdweb-dev/react';
+import { useAddress, useMetamask, useEditionDrop, useToken, useVote, useNetwork } from '@thirdweb-dev/react';
+import { ChainId } from '@thirdweb-dev/sdk'
 import { useState, useEffect, useMemo } from 'react';
 import { AddressZero } from "@ethersproject/constants";
 
@@ -8,6 +9,7 @@ const App = () => {
   const connectWithMetamask = useMetamask();
   console.log("👋 Address:", address);
 
+  const network = useNetwork();
   // Initialize our editionDrop contract
   const editionDrop = useEditionDrop("0xe76c0Eb75D506e5aedA686AB4E0d6D1ed9e5a052");
   // Initialize our token contract
@@ -171,6 +173,18 @@ const App = () => {
       setIsClaiming(false);
     }
   };
+
+  if (address && (network?.[0].data.chain.id !== ChainId.Rinkeby)) {
+    return (
+      <div className="unsupported-network">
+        <h2>Please connect to Rinkeby</h2>
+        <p>
+          This dapp only works on the Rinkeby network, please switch networks
+          in your connected wallet.
+        </p>
+      </div>
+    );
+  }
 
   // This is the case where the user hasn't connected their wallet
   // to your web app. Let them call connectWallet.
