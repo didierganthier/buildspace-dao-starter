@@ -1,4 +1,4 @@
-import { useAddress, useMetamask, useEditionDrop, useToken } from '@thirdweb-dev/react';
+import { useAddress, useMetamask, useEditionDrop, useToken, useVote } from '@thirdweb-dev/react';
 import { useState, useEffect, useMemo } from 'react';
 
 const App = () => {
@@ -11,6 +11,7 @@ const App = () => {
   const editionDrop = useEditionDrop("0xe76c0Eb75D506e5aedA686AB4E0d6D1ed9e5a052");
   // Initialize our token contract
   const token = useToken("0x1A1d20A5E0e8a01fE20A57Aca65CC3564Eb1B8F7")
+  const vote = useVote("0x7CEd7D1e9788493d11662B63a111EC76cE7a6038");
   // State variable for us to know if user has our NFT.
   const [hasClaimedNFT, setHasClaimedNFT] = useState(false);
   // isClaiming lets us easily keep a loading state while the NFT is minting.
@@ -25,6 +26,58 @@ const App = () => {
   const shortenAddress = (str) => {
     return str.substring(0, 6) + "..." + str.substring(str.length - 4);
   };
+
+  const [proposals, setProposals] = useState([]);
+  const [isVoting, setIsVoting] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+
+  // Retrieve all our existing proposals from the contract.
+  useEffect(() => {
+    if (!hasClaimedNFT) {
+      return;
+    }
+
+    // A simple call to vote.getAll() to grab the proposals.
+    const getAllProposals = async () => {
+      try {
+        const proposals = await vote.getAll();
+        setProposals(proposals);
+        console.log("🌈 Proposals:", proposals);
+      } catch (error) {
+        console.log("failed to get proposals", error);
+      }
+    };
+    getAllProposals();
+  }, [hasClaimedNFT, vote]);
+
+  // We also need to check if the user already voted.
+  useEffect(() => {
+    if (!hasClaimedNFT) {
+      return;
+    }
+
+    // If we haven't finished retrieving the proposals from the useEffect above
+    // then we can't check if the user voted yet!
+    if (!proposals.length) {
+      return;
+    }
+
+    const checkIfUserHasVoted = async () => {
+      try {
+        const hasVoted = await vote.hasVoted(proposals[0].proposalId, address);
+        setHasVoted(hasVoted);
+        if (hasVoted) {
+          console.log("🥵 User has already voted");
+        } else {
+          console.log("🙂 User has not voted yet");
+        }
+      } catch (error) {
+        console.error("Failed to check if wallet has voted", error);
+      }
+    };
+    checkIfUserHasVoted();
+
+  }, [hasClaimedNFT, proposals, address, vote]);
 
   // This useEffect grabs all the addresses of our members holding our NFT.
   useEffect(() => {
@@ -131,44 +184,44 @@ const App = () => {
     );
   }
 
-// If the user has already claimed their NFT we want to display the internal DAO page to them
-// only DAO members will see this. Render all the members + token amounts.
-if (hasClaimedNFT) {
-  return (
-    <div className="member-page">
-      <h1>🍪DAO Member Page</h1>
-      <p>Congratulations on being a member</p>
-      <div>
+  // If the user has already claimed their NFT we want to display the internal DAO page to them
+  // only DAO members will see this. Render all the members + token amounts.
+  if (hasClaimedNFT) {
+    return (
+      <div className="member-page">
+        <h1>💻 MacDAO Member Page</h1>
+        <p>Congratulations on being a member</p>
         <div>
-          <h2>Member List</h2>
-          <table className="card">
-            <thead>
-              <tr>
-                <th>Address</th>
-                <th>Token Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {memberList.map((member) => {
-                return (
-                  <tr key={member.address}>
-                    <td>{shortenAddress(member.address)}</td>
-                    <td>{member.tokenAmount}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div>
+            <h2>Member List</h2>
+            <table className="card">
+              <thead>
+                <tr>
+                  <th>Address</th>
+                  <th>Token Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {memberList.map((member) => {
+                  return (
+                    <tr key={member.address}>
+                      <td>{shortenAddress(member.address)}</td>
+                      <td>{member.tokenAmount}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   // Render mint nft screen.
   return (
     <div className="mint-nft">
-      <h1>Mint your free 🍪DAO Membership NFT</h1>
+      <h1>Mint your free 💻 MacDAO Membership NFT</h1>
       <button
         disabled={isClaiming}
         onClick={mintNft}
